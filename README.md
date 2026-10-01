@@ -26,7 +26,7 @@ This repository is meant to be copied and customised for each new package you pu
 4. Replace the starter implementation in `src/index.ts` with your package code.
 5. Add any runtime dependencies your package needs.
 6. Install dependencies and start developing.
-7. Add repository secrets in GitHub: `NPM_TOKEN` (publishing), `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` (docs deploys).
+7. Add repository secrets in GitHub: `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` (docs deploys). npm needs no secret, see [Releasing](#releasing).
 
 ## Install dependencies
 
@@ -68,7 +68,18 @@ Run the **NPM Release** workflow from the Actions tab. Version bumps follow [con
 - `feat:` → minor
 - `feat!:` or `BREAKING CHANGE:` → major
 
-Release notes are prepended to `CHANGELOG.md` automatically. The release job requires a `NPM_TOKEN` repository secret; `GITHUB_TOKEN` is provided automatically by GitHub Actions.
+Release notes are prepended to `CHANGELOG.md` automatically. `GITHUB_TOKEN` is provided automatically by GitHub Actions.
+
+The release job publishes with npm [trusted publishing](https://docs.npmjs.com/trusted-publishers) (OIDC), not an `NPM_TOKEN`. npm tokens that bypass 2FA lose publish rights in January 2027, and a token without the bypass fails with `EOTP`. Trusted publishing can only be set up for a package that already exists, so do this once per package:
+
+```bash
+npm login
+pnpm run build
+npm publish                 # first version, by hand, with your 2FA code
+npm trust github <package-name> --repo <owner>/<repo> --file release.yml --allow-publish
+```
+
+After that, every release runs from the workflow.
 
 ## Project structure
 
